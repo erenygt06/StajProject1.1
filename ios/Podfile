@@ -1,0 +1,40 @@
+platform :ios, '13.0'
+use_modular_headers!
+
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+
+target 'dosyaYapisi' do
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :flipper_configuration => FlipperConfiguration.disabled,
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  # Remove manual pod entries for RCT-Folly
+  # pod 'RCT-Folly', :modular_headers => false
+
+  # Include other necessary pods here
+  # pod 'Firebase/Core', :modular_headers => true
+
+  target 'dosyaYapisiTests' do
+    inherit! :complete
+    # Pods for testing
+  end
+
+  post_install do |installer|
+    react_native_post_install(installer)
+
+    # Adjust build settings for RCT-Folly
+    installer.pods_project.targets.each do |target|
+      if target.name == 'RCT-Folly'
+        target.build_configurations.each do |config|
+          config.build_settings['MODULEMAP_FILE'] = nil
+          config.build_settings['CLANG_ENABLE_MODULES'] = 'NO'
+          config.build_settings['DEFINES_MODULE'] = 'NO'
+        end
+      end
+    end
+  end
+end
